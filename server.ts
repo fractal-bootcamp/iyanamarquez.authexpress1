@@ -77,7 +77,7 @@ expressApp.get("/login", (req: Request, res: Response) => {
 
 expressApp.get("/logout", (req: Request, res: Response) => {
   if (getAuth().currentUser) {
-    res.send("you ARE logged in");
+    res.sendFile(path.join(__dirname, "/pages/logout.html"));
   } else {
     res.send("you are logged OUT");
   }

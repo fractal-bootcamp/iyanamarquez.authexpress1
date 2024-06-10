@@ -13,6 +13,7 @@ import {
   getAuth,
   createUserWithEmailAndPassword,
   signOut,
+  signInWithEmailAndPassword,
 } from "firebase/auth";
 
 // TODO: Replace the following with your app's Firebase project configuration
@@ -56,52 +57,28 @@ const users = [
 //   res.sendFile(path.join(__dirname, "/index.html"));
 // });
 
-// / Get signup page
+// / GET home page
 expressApp.get("/", (req: Request, res: Response) => {
-  res.sendFile(path.join(__dirname, "/signup.html"));
+  res.sendFile(path.join(__dirname, "/pages/index.html"));
 });
 
+// GET SIGNUP page
+expressApp.get("/signup", (req: Request, res: Response) => {
+  res.sendFile(path.join(__dirname, "/pages/signup.html"));
+});
+
+// GET lOGIN page
+expressApp.get("/login", (req: Request, res: Response) => {
+  res.sendFile(path.join(__dirname, "/pages/login.html"));
+});
+
+// GET SUCCESS page
 expressApp.get("/success", (req: Request, res: Response) => {
-  res.sendFile(path.join(__dirname, "/success.html"));
+  res.sendFile(path.join(__dirname, "/pages/success.html"));
 });
-// expressApp.post("/login", async (req: Request, res: Response) => {
-//   const reqUsername = req.body.email;
-//   const reqPassword = req.body.password;
 
-//   const foundUser = await users.find((user) => {
-//     return user.email === reqUsername && user.password === reqPassword;
-//   });
-//   if (foundUser) {
-//     res.send(`<h1>Success!</h1>`);
-//   } else {
-//     res.send(`<h1>Failed!</h1>`);
-//   }
-
-//   //   res.send(JSON.stringify(foundUser));
-// });
-
-// expressApp.post("/login", async (req, res) => {
-//   try {
-//     const { email, password } = req.body;
-//     const auth = getAuth();
-//     createUserWithEmailAndPassword(auth, email, password)
-//       .then((data: any) => {
-//         return res
-//           .status(201)
-//           .json({ message: `user ${data.user.uid} signed up successfully` });
-//       })
-//       .catch((error: any) => {
-//         var errorCode = error.code;
-//         var errorMessage = error.message;
-//         console.log(error);
-//       });
-//     res.redirect("/");
-//   } catch (e) {
-//     res.redirect("register");
-//   }
-// });
-
-expressApp.post("/register", async (req, res) => {
+// POST to SIGNUP page (create new user)
+expressApp.post("/signup", async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -110,18 +87,43 @@ expressApp.post("/register", async (req, res) => {
         // Signed in
         var user = userCredential.user;
         console.log(user);
+        res.sendFile(path.join(__dirname, "/pages/success.html"));
+      })
+      .catch((error: any) => {
+        var errorCode = error.code;
+        var errorMessage = error.message;
+        console.log(errorCode, errorMessage);
+        console.log(error);
+        res.send(errorCode);
+      });
+  } catch (e) {
+    res.send("signup failed");
+  }
+});
+
+// POST to LOGIN page (sign in exisiting user)
+expressApp.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    signInWithEmailAndPassword(auth, email, password)
+      .then((userCredential: any) => {
+        // Signed in
+        var user = userCredential.user;
+        console.log(user);
+        res.sendFile(path.join(__dirname, "/pages/success.html"));
       })
       .catch((error: any) => {
         var errorCode = error.code;
         var errorMessage = error.message;
         console.log(error);
+        res.send("login failed");
       });
-    res.redirect("/success");
   } catch (e) {
-    res.send("failed");
+    res.send("login failed");
   }
 });
 
+// POST to LOGOUT (sign out user)
 expressApp.post("/logout", async (req, res) => {
   const auth = getAuth();
   signOut(auth)
@@ -130,7 +132,7 @@ expressApp.post("/logout", async (req, res) => {
     })
     .catch((error) => {
       // An error happened.
-      res.send("error");
+      res.send("logout error");
     });
 });
 

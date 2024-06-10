@@ -1,6 +1,8 @@
 // const express = require("express");
 import bodyParser from "body-parser";
 import express, { Request, Response } from "express";
+import cors from "cors"; // Add this to the list of imports
+import { VerifyToken } from "./middlewares/VerifyToken";
 
 // Import the functions you need from the SDKs you need
 import path from "path";
@@ -33,18 +35,36 @@ const auth = getAuth(app);
 // Express stuff
 const expressApp = express();
 // const bodyParser = require("body-parser");
-
 expressApp.use(bodyParser.json());
 expressApp.use(bodyParser.urlencoded({ extended: true }));
 expressApp.use(express.json());
+expressApp.use(cors());
+expressApp.use(VerifyToken);
 
-const port = 3000;
+const port = 3002;
 
 // / GET home page
+
 expressApp.get("/", (req: Request, res: Response) => {
-  if (getAuth().currentUser) {
+  console.log("get user", req.user);
+  if (req.user) {
+    console.log("yep");
     res.sendFile(path.join(__dirname, "/pages/index.html"));
   } else {
+    console.log("nope");
+
+    res.sendFile(path.join(__dirname, "/pages/login.html"));
+  }
+});
+
+expressApp.post("/", (req: Request, res: Response) => {
+  console.log("helo", req.user);
+  if (getAuth().currentUser) {
+    console.log("yep");
+    res.sendFile(path.join(__dirname, "/pages/index.html"));
+  } else {
+    console.log("nope");
+
     res.sendFile(path.join(__dirname, "/pages/login.html"));
   }
 });

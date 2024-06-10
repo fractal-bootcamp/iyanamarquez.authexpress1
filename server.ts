@@ -40,69 +40,90 @@ expressApp.use(express.json());
 
 const port = 3000;
 
-const users = [
-  {
-    id: 1,
-    email: "blah",
-    password: "password",
-  },
-  {
-    id: 2,
-    email: "bruh",
-    password: "password",
-  },
-];
-
-// expressApp.get("/", (req: Request, res: Response) => {
-//   res.sendFile(path.join(__dirname, "/index.html"));
-// });
-
 // / GET home page
 expressApp.get("/", (req: Request, res: Response) => {
-  res.sendFile(path.join(__dirname, "/pages/index.html"));
+  if (getAuth().currentUser) {
+    res.sendFile(path.join(__dirname, "/pages/index.html"));
+  } else {
+    res.sendFile(path.join(__dirname, "/pages/login.html"));
+  }
+});
+
+expressApp.get("/check", (req: Request, res: Response) => {
+  if (getAuth().currentUser) {
+    res.send("you are signed in");
+  } else {
+    res.send("you are not signed in");
+  }
 });
 
 // GET SIGNUP page
 expressApp.get("/signup", (req: Request, res: Response) => {
-  res.sendFile(path.join(__dirname, "/pages/signup.html"));
+  if (getAuth().currentUser) {
+    res.sendFile(path.join(__dirname, "/pages/loggedin.html"));
+  } else {
+    res.sendFile(path.join(__dirname, "/pages/signup.html"));
+  }
 });
 
 // GET lOGIN page
 expressApp.get("/login", (req: Request, res: Response) => {
-  res.sendFile(path.join(__dirname, "/pages/login.html"));
+  if (getAuth().currentUser) {
+    res.send("you ARE logged in");
+  } else {
+    res.sendFile(path.join(__dirname, "/pages/login.html"));
+  }
 });
 
+expressApp.get("/logout", (req: Request, res: Response) => {
+  if (getAuth().currentUser) {
+    res.send("you ARE logged in");
+  } else {
+    res.send("you are logged OUT");
+  }
+});
 // GET SUCCESS page
 expressApp.get("/success", (req: Request, res: Response) => {
-  res.sendFile(path.join(__dirname, "/pages/success.html"));
+  console.log(getAuth().currentUser);
+  if (getAuth().currentUser) {
+    res.sendFile(path.join(__dirname, "/pages/loggedin.html"));
+  } else {
+    res.sendFile(path.join(__dirname, "/pages/failed.html"));
+  }
 });
 
 // POST to SIGNUP page (create new user)
 expressApp.post("/signup", async (req, res) => {
-  try {
-    const { email, password } = req.body;
+  if (getAuth().currentUser) {
+    res.sendFile(path.join(__dirname, "/pages/success.html"));
+  } else {
+    try {
+      const { email, password } = req.body;
 
-    createUserWithEmailAndPassword(auth, email, password)
-      .then((userCredential: any) => {
-        // Signed in
-        var user = userCredential.user;
-        console.log(user);
-        res.sendFile(path.join(__dirname, "/pages/success.html"));
-      })
-      .catch((error: any) => {
-        var errorCode = error.code;
-        var errorMessage = error.message;
-        console.log(errorCode, errorMessage);
-        console.log(error);
-        res.send(errorCode);
-      });
-  } catch (e) {
-    res.send("signup failed");
+      createUserWithEmailAndPassword(auth, email, password)
+        .then((userCredential: any) => {
+          // Signed in
+          var user = userCredential.user;
+          console.log(user);
+          res.sendFile(path.join(__dirname, "/pages/success.html"));
+        })
+        .catch((error: any) => {
+          var errorCode = error.code;
+          var errorMessage = error.message;
+          console.log(errorCode, errorMessage);
+          console.log(error);
+          res.send(errorCode);
+        });
+    } catch (e) {
+      res.send("signup failed");
+    }
   }
 });
 
 // POST to LOGIN page (sign in exisiting user)
 expressApp.post("/login", async (req, res) => {
+  // if i have a cookie that says i'm ALREADY loggedin
+  // then redirect me, do not force me to enter my email and password
   try {
     const { email, password } = req.body;
     signInWithEmailAndPassword(auth, email, password)
@@ -110,7 +131,7 @@ expressApp.post("/login", async (req, res) => {
         // Signed in
         var user = userCredential.user;
         console.log(user);
-        res.sendFile(path.join(__dirname, "/pages/success.html"));
+        res.redirect("/login");
       })
       .catch((error: any) => {
         var errorCode = error.code;
@@ -125,9 +146,9 @@ expressApp.post("/login", async (req, res) => {
 
 // POST to LOGOUT (sign out user)
 expressApp.post("/logout", async (req, res) => {
-  const auth = getAuth();
   signOut(auth)
     .then(() => {
+      getAuth().currentUser;
       res.send("logged out");
     })
     .catch((error) => {
